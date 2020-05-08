@@ -1,10 +1,11 @@
-import connect, { disconnect } from 'api/utils/connect_to_mongo';
+import { DB } from 'api/odm';
 import request from '../app/shared/JSONRequest';
 import elasticMapping from './elastic_mapping/elastic_mapping';
 
-import indexConfig from '../app/api/config/elasticIndexes';
 import { search } from '../app/api/search';
+import { config } from '../app/api/config';
 import { IndexError } from '../app/api/search/entitiesIndex';
+import { tenants } from '../app/api/tenants/tenantContext';
 import errorLog from '../app/api/log/errorLog';
 
 const indexEntities = async () => {
@@ -24,7 +25,7 @@ const indexEntities = async () => {
 };
 
 const prepareIndex = async indexUrl => {
-  process.stdout.write(`Deleting index... ${indexConfig.index}\n`);
+  process.stdout.write(`Deleting index... ${config.defaultTenant.indexName}\n`);
   try {
     await request.delete(indexUrl);
   } catch (err) {
@@ -38,7 +39,7 @@ const prepareIndex = async indexUrl => {
     }
   }
 
-  process.stdout.write(`Creating index... ${indexConfig.index}\n`);
+  process.stdout.write(`Creating index... ${config.defaultTenant.indexName}\n`);
   await request.put(indexUrl, elasticMapping);
 };
 
@@ -69,29 +70,18 @@ const restoreSettings = async indexUrl => {
 };
 
 const reindex = async () => {
-  const docsIndexed = await indexEntities();
-  process.stdout.write(`Indexing documents and entities... - ${docsIndexed} indexed\r\n`);
+  await tenants.run(async () => {
+    const docsIndexed = await indexEntities();
+    process.stdout.write(`Indexing documents and entities... - ${docsIndexed} indexed\r\n`);
+  });
 };
 
-const attemptStringify = err => {
-  let errMessage = '';
-  try {
-    errMessage = JSON.stringify(err, null, ' ');
-  } catch (_err) {
-    errMessage = err;
-  }
-
-  return errMessage;
-};
-
-const logErrors = err => {
+const handleError = async err => {
   if (err instanceof IndexError) {
     process.stdout.write('\r\nWarning! Errors found during reindex.\r\n');
-  } else {
-    const errMessage = attemptStringify(err);
-    errorLog.error(`Uncaught Reindex error.\r\n${errMessage}\r\nWill exit with (1)\r\n`);
-    process.exit(1);
   }
+  await DB.disconnect();
+  throw err;
 };
 
 const done = start => {
@@ -100,11 +90,10 @@ const done = start => {
   errorLog.closeGraylog();
 };
 
-/*eslint-disable max-statements*/
-connect().then(async () => {
+DB.connect().then(async () => {
   const start = Date.now();
   const elasticUrl = process.env.ELASTICSEARCH_URL || 'http://localhost:9200';
-  const indexUrl = `${elasticUrl}/${indexConfig.index}`;
+  const indexUrl = `${elasticUrl}/${config.defaultTenant.indexName}`;
 
   try {
     await prepareIndex(indexUrl);
@@ -112,9 +101,9 @@ connect().then(async () => {
     await reindex(indexUrl);
     await restoreSettings(indexUrl);
   } catch (err) {
-    logErrors(err);
+    handleError(err);
   }
 
   done(start);
-  return disconnect();
+  return DB.disconnect();
 });

@@ -519,7 +519,7 @@ export default {
       return Promise.resolve();
     }
 
-    return model.db.updateMany({ template }, actions);
+    return model.updateMany({ template }, actions);
   },
 
   count: model.count.bind(model),

@@ -12,6 +12,7 @@ import csv, { CSVRow } from './csv';
 import importFile from './importFile';
 import { importEntity, translateEntity } from './importEntity';
 import { extractEntity, toSafeName } from './entityRow';
+import { ObjectId } from 'mongodb';
 
 export class CSVLoader extends EventEmitter {
   stopOnError: boolean;
@@ -39,7 +40,7 @@ export class CSVLoader extends EventEmitter {
     }
   }
 
-  async load(csvPath: string, templateId: string, options = { language: 'en' }) {
+  async load(csvPath: string, templateId: ObjectId | string, options = { language: 'en' }) {
     const template = await templates.getById(templateId);
     if (!template) {
       throw new Error('template not found!');
