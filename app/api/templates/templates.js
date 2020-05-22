@@ -1,9 +1,6 @@
-/** @format */
-import { DBHOST as dbHost } from 'api/config/database.js';
 import entities from 'api/entities';
 import translations from 'api/i18n/translations';
 import createError from 'api/utils/Error';
-import request from 'shared/JSONRequest.js';
 
 import { validateTemplate } from '../../shared/types/templateSchema';
 import model from './templatesModel';
@@ -184,24 +181,6 @@ export default {
 
   countByTemplate(template) {
     return entities.countByTemplate(template);
-  },
-
-  getEntitySelectNames(templateId) {
-    return this.getById(templateId).then(template => {
-      const selects = template.properties.filter(
-        prop => prop.type === 'select' || prop.type === 'multiselect'
-      );
-      const entitySelects = [];
-      return Promise.all(
-        selects.map(select =>
-          request.get(`${dbHost}/${select.content}`).then(result => {
-            if (result.json.type === 'template') {
-              entitySelects.push(select.name);
-            }
-          })
-        )
-      ).then(() => entitySelects);
-    });
   },
 
   countByThesauri(thesauriId) {
