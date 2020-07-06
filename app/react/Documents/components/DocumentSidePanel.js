@@ -107,6 +107,7 @@ export class DocumentSidePanel extends Component {
       excludeConnectionsTab,
       relationships,
     } = this.props;
+
     const TocForm = this.props.tocFormComponent;
 
     const { attachments, documents } = doc.toJS();
@@ -115,7 +116,7 @@ export class DocumentSidePanel extends Component {
 
     let { tab } = this.props;
     this.initialTemplateId = doc.get('template');
-    if (isEntity && (tab === 'references' || tab === 'toc' || !tab)) {
+    if ((isEntity && (tab === 'references' || tab === 'toc')) || !tab) {
       tab = 'metadata';
     }
 
@@ -299,7 +300,7 @@ export class DocumentSidePanel extends Component {
                         initialTemplateId={this.initialTemplateId}
                       />
                       <CopyFromEntity
-                        originalTemplateId={this.props.doc.get('template')}
+                        originalEntity={this.props.doc.toJS()}
                         templates={this.props.templates}
                         onSelect={this.onCopyFromSelect}
                         formModel={this.props.formPath}
@@ -375,7 +376,6 @@ DocumentSidePanel.defaultProps = {
   readOnly: false,
   getDocumentReferences: undefined,
   tocFormComponent: () => false,
-  DocumentForm: () => false,
   EntityForm: () => false,
   raw: false,
   file: {},
@@ -385,7 +385,6 @@ DocumentSidePanel.propTypes = {
   doc: PropTypes.instanceOf(Object).isRequired,
   EntityForm: PropTypes.func,
   tocFormComponent: PropTypes.func,
-  DocumentForm: PropTypes.func,
   formDirty: PropTypes.bool,
   formPath: PropTypes.string.isRequired,
   searchTerm: PropTypes.string,
