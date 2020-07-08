@@ -487,11 +487,11 @@ export default {
     return Promise.resolve();
   },
 
-  updateMetadataProperties(template, currentTemplate) {
+  async updateMetadataProperties(template, currentTemplate) {
     const actions = {};
     actions.$rename = {};
     actions.$unset = {};
-    template.properties = generateNamesAndIds(template.properties);
+    template.properties = await generateNamesAndIds(template.properties);
     template.properties.forEach(property => {
       const currentProperty = currentTemplate.properties.find(p => p.id === property.id);
       if (currentProperty && currentProperty.name !== property.name) {

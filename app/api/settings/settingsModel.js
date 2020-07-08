@@ -40,6 +40,7 @@ const settingsSchema = new mongoose.Schema({
   analyticsTrackingId: String,
   matomoConfig: String,
   dateFormat: String,
+  newNameGeneration: Boolean,
   features: featuresSchema,
   custom: mongoose.Schema.Types.Mixed,
   sync: { type: mongoose.Schema.Types.Mixed, select: false },
